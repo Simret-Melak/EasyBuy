@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import {
+  Text,
+  View,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Image,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from './FirebaseConfig'; 
+import { auth, db } from './FirebaseConfig';
 import { useNavigation } from '@react-navigation/native';
-import { doc, setDoc } from 'firebase/firestore'; 
+import { doc, setDoc } from 'firebase/firestore';
+import { useFontSize } from './FontSizeContext';
 
 export default function SignUpPage() {
   const [username, setUsername] = useState('');
@@ -11,6 +25,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [retypePassword, setRetypePassword] = useState('');
   const navigation = useNavigation();
+  const { fontSize } = useFontSize();
 
   const handleSignUp = async () => {
     if (password !== retypePassword) {
@@ -47,52 +62,93 @@ export default function SignUpPage() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>EasyBuy</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Retype Password"
-        value={retypePassword}
-        onChangeText={setRetypePassword}
-        secureTextEntry
-      />
-      <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingContainer}
+        >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+
+          <View style={styles.container}>
+            <Image
+              source={require('./easybuylogo2text.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+
+          
+
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Retype Password"
+              value={retypePassword}
+              onChangeText={setRetypePassword}
+              secureTextEntry
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+              <Text style={styles.buttonText}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FCEADE',
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
+  backButton: {
+    marginTop: 10,
+    marginLeft: 10,
+  },
+  backButtonText: {
+    color: '#25CED1',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FCEADE',
     padding: 20,
   },
+  logo: {
+    width: 300,
+    height: 300,
+    marginBottom: -50,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
   },
@@ -111,9 +167,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#25CED1',
     borderRadius: 5,
     alignItems: 'center',
+    marginTop: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
   },
 });

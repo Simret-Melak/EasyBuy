@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable, Alert, SafeAreaView } from 'react-native';
+import { View, Text,TextInput, StyleSheet, Pressable, Alert, SafeAreaView, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { db } from './FirebaseConfig';
 import { doc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useFontSize } from './FontSizeContext';
 
 const ChangeAddressPage = () => {
   const [streetAddress, setStreetAddress] = useState('');
@@ -12,6 +14,7 @@ const ChangeAddressPage = () => {
   const [zipCode, setZipCode] = useState('');
   const [notes, setNotes] = useState('');
   const navigation = useNavigation();
+  const { fontSize } = useFontSize();
 
   const handleAddressChange = async () => {
     if (!streetAddress || !city || !state || !zipCode) {
@@ -26,7 +29,6 @@ const ChangeAddressPage = () => {
         return;
       }
 
-     
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
         address: {
@@ -37,7 +39,6 @@ const ChangeAddressPage = () => {
           notes,
         },
       });
-
 
       Alert.alert('Address Changed', 'Your address has been successfully updated.', [
         {
@@ -53,42 +54,54 @@ const ChangeAddressPage = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Street Address"
-          value={streetAddress}
-          onChangeText={setStreetAddress}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="City"
-          value={city}
-          onChangeText={setCity}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="State"
-          value={state}
-          onChangeText={setState}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Zip Code"
-          value={zipCode}
-          onChangeText={setZipCode}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Additional Notes (Optional)"
-          value={notes}
-          onChangeText={setNotes}
-        />
-        <Pressable style={styles.button} onPress={handleAddressChange}>
-          <Text style={styles.buttonText}>Save Address</Text>
+      {/* Back Button inside SafeAreaView */}
+      <View style={styles.header}>
+        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="black" />
         </Pressable>
       </View>
+
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          {/* Form Fields */}
+          <TextInput
+            style={[styles.input, { fontSize }]}
+            placeholder="Street Address"
+            value={streetAddress}
+            onChangeText={setStreetAddress}
+          />
+          <TextInput
+            style={[styles.input, { fontSize }]}
+            placeholder="City"
+            value={city}
+            onChangeText={setCity}
+          />
+          <TextInput
+            style={[styles.input, { fontSize }]}
+            placeholder="State"
+            value={state}
+            onChangeText={setState}
+          />
+          <TextInput
+            style={[styles.input, { fontSize }]}
+            placeholder="Zip Code"
+            value={zipCode}
+            onChangeText={setZipCode}
+          />
+          <TextInput
+            style={[styles.input, { fontSize }]}
+            placeholder="Additional Notes (Optional)"
+            value={notes}
+            onChangeText={setNotes}
+          />
+          <Pressable style={styles.button} onPress={handleAddressChange}>
+            <Text style={[styles.buttonText, { fontSize }]}>Save Address</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -98,21 +111,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fceade',
   },
+  header: {
+    padding: 10,
+    backgroundColor: '#fceade',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 5,
+  },
   container: {
     flexGrow: 1,
     padding: 20,
-    justifyContent: 'center',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'black',
+  keyboardAvoidingView: {
+    flex: 1,
   },
   input: {
     height: 40,

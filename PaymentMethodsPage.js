@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, SafeAreaView, Platform,KeyboardAvoidingView, Alert } from 'react-native';
 import { db } from './FirebaseConfig'; 
 import { doc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth'; 
 import { useNavigation } from '@react-navigation/native'; 
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const PaymentMethodsPage = () => {
   const [cardNumber, setCardNumber] = useState('');
@@ -54,14 +55,21 @@ const PaymentMethodsPage = () => {
   };
 
   return (
+
     <SafeAreaView style={styles.safeArea}>
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="black" />
+        </Pressable>
+        <Text style={styles.headerText}>Payment Methods</Text>
+      </View>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()}>
-            <Text style={styles.headerText}>Account</Text>
-          </Pressable>
-          <Text style={styles.headerText}>Payment Methods</Text>
-        </View>
         <TextInput
           style={styles.input}
           placeholder="Card Number"
@@ -118,6 +126,7 @@ const PaymentMethodsPage = () => {
           <Text style={styles.buttonText}>Save Payment Method</Text>
         </Pressable>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -127,21 +136,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fceade', 
   },
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#fceade',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  backButton: {
+    marginRight: 15,
   },
   headerText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'black',
+  },
+  container: {
+    flexGrow: 1,
+    padding: 20,
   },
   sectionTitle: {
     fontSize: 18,

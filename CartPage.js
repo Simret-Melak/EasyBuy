@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { db, auth } from './FirebaseConfig'; // Firebase config
+import { db } from './FirebaseConfig'; // Firebase config
 import { getAuth } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-const CartItem = ({ item, onUpdate }) => {
-=======
 const CartItem = ({ item, onUpdate, onRemove }) => {
->>>>>>> Stashed changes
-=======
-const CartItem = ({ item, onUpdate, onRemove }) => {
->>>>>>> Stashed changes
   return (
     <View style={styles.itemContainer}>
       <Image source={{ uri: item.image }} style={styles.itemImage} />
@@ -71,15 +63,15 @@ const CartScreen = () => {
   const handleUpdateQuantity = async (itemId, delta) => {
     const updatedItems = items.map((item) => {
       if (item.id === itemId) {
-        const updatedQuantity = item.quantity + delta;
-        return { ...item, quantity: Math.max(updatedQuantity, 1) }; // Ensure quantity doesn't go below 1
+        const updatedQuantity = Math.max(item.quantity + delta, 1);
+        return { ...item, quantity: updatedQuantity }; // Ensure quantity doesn't go below 1
       }
       return item;
     });
 
     setItems(updatedItems);
 
-    // Update Firestore with the new quantity
+    // Update Firestore
     if (user) {
       try {
         const cartDocRef = doc(db, 'Users', user.uid, 'Cart', 'cartItems');
@@ -96,7 +88,7 @@ const CartScreen = () => {
     const updatedItems = items.filter((item) => item.id !== itemId);
     setItems(updatedItems);
 
-    // Update Firestore with the removed item
+    // Update Firestore
     if (user) {
       try {
         const cartDocRef = doc(db, 'Users', user.uid, 'Cart', 'cartItems');
@@ -117,18 +109,8 @@ const CartScreen = () => {
         <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="home" size={25} color="black" />
         </TouchableOpacity>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        <TextInput 
-          placeholder="Search for items" 
-=======
         <TextInput
           placeholder="Search for items"
->>>>>>> Stashed changes
-=======
-        <TextInput
-          placeholder="Search for items"
->>>>>>> Stashed changes
           style={styles.searchInput}
           placeholderTextColor="#666"
         />
@@ -145,6 +127,8 @@ const CartScreen = () => {
 
       {loading ? (
         <Text style={styles.loadingText}>Loading cart...</Text>
+      ) : items.length === 0 ? (
+        <Text style={styles.emptyCartText}>Your cart is empty!</Text>
       ) : (
         <ScrollView style={styles.itemsContainer}>
           {items.map((item) => (

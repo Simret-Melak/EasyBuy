@@ -1,24 +1,35 @@
-
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import {
+  Text,
+  Image,
+  View,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './FirebaseConfig';
-import { useNavigation } from '@react-navigation/native'; 
+import { useNavigation } from '@react-navigation/native';
+import { useFontSize } from './FontSizeContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
+  const { fontSize } = useFontSize();
 
   const handleLogin = async () => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-    
-      navigation.navigate('StoreList'); 
+      await signInWithEmailAndPassword(auth, email, password);
+      navigation.navigate('StoreList');
     } catch (error) {
       console.error(error);
-
       let errorMessage = 'An unknown error occurred. Please try again.';
       if (error.code === 'auth/user-not-found') {
         errorMessage = 'No user found with this email.';
@@ -26,49 +37,97 @@ export default function LoginPage() {
         errorMessage = 'Invalid password.';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'The email address is invalid.';
-
       }
       Alert.alert('Login Failed', errorMessage, [{ text: 'OK' }]);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>EasyBuy</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      
-      </TouchableOpacity>
-      <Text > Forgot password</Text>
-      <Text> Create account</Text>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingContainer}
+        >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+
+          <View style={styles.container}>
+            <Image
+              source={require('./easybuylogo2text.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+
+            <Text
+              style={styles.link}
+              onPress={() =>
+                Alert.alert('Reset Password', 'Redirect to reset password functionality.')
+              }
+            >
+              Forgot password
+            </Text>
+            <Text style={styles.link} onPress={() => navigation.navigate('SignUp')}>
+              Create account
+            </Text>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
+  backButton: {
+    marginTop: 10,
+    marginLeft: 10,
+  },
+  backButtonText: {
+    color: '#25CED1',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FCEADE', 
+    backgroundColor: '#FCEADE',
     padding: 20,
   },
+  logo: {
+    width: 300,
+    height: 300,
+    marginBottom: -50,
+  },
   title: {
-    fontSize: 54,
     fontWeight: 'bold',
     marginBottom: 20,
   },
@@ -84,12 +143,18 @@ const styles = StyleSheet.create({
   button: {
     width: '80%',
     padding: 15,
-    backgroundColor: '#25CED1', 
+    backgroundColor: '#25CED1',
     borderRadius: 5,
     alignItems: 'center',
+    marginBottom: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+  },
+  link: {
+    color: '#25CED1',
+    marginTop: 10,
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });

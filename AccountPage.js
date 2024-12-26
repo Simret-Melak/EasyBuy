@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, SafeAreaView, Image, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { db } from './FirebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
-import { getAuth, signOut } from 'firebase/auth';  // Import signOut from Firebase Authentication
+import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { getAuth, signOut } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { useFontSize } from './FontSizeContext';
 
 const AccountPage = () => {
   const [userName, setUserName] = useState('');
@@ -13,9 +14,13 @@ const AccountPage = () => {
   const [userAddress, setUserAddress] = useState(null);
   const [userPaymentMethod, setUserPaymentMethod] = useState(null);
   const [userOrderHistory, setUserOrderHistory] = useState([]);
+  const [cartItemCount, setCartItemCount] = useState(0); // New state for cart item count
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
+  const { fontSize } = useFontSize();
+
+  const currentRoute = useNavigationState((state) => state.routes[state.index].name);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -40,12 +45,32 @@ const AccountPage = () => {
         }
       } catch (error) {
         setError(error.message);
-      } finally {
-        setLoading(false);
+      }
+    };
+
+    const fetchCartItemCount = async () => {
+      try {
+        const userId = getAuth().currentUser?.uid;
+        if (!userId) return;
+
+        const cartRef = doc(db, 'users', userId, 'Cart', 'cartItems');
+        const cartDoc = await getDoc(cartRef);
+
+        if (cartDoc.exists()) {
+          const cartData = cartDoc.data().items || [];
+          setCartItemCount(cartData.length); // Set the number of items in the cart
+        } else {
+          setCartItemCount(0); // No items in the cart
+        }
+      } catch (error) {
+        console.error('Error fetching cart item count:', error);
+        setCartItemCount(0);
       }
     };
 
     fetchUserData();
+    fetchCartItemCount();
+    setLoading(false);
   }, []);
 
   const handleImagePick = async () => {
@@ -55,27 +80,24 @@ const AccountPage = () => {
         Alert.alert('Permission required', 'You need to allow access to your photos.');
         return;
       }
-  
+
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
       });
-  
+
       if (result.canceled) {
         console.log('Image selection was canceled');
         return;
       }
-  
+
       const { uri } = result.assets[0];
-      console.log('Selected image URI:', uri);
-  
       if (!uri) {
         Alert.alert('Error', 'No image selected. Please try again.');
         return;
       }
-  
-      // Call the upload function
+
       uploadImage(uri);
     } catch (error) {
       console.error('Error during image picker:', error);
@@ -94,11 +116,10 @@ const AccountPage = () => {
     }
   };
 
-  // Handle Sign Out
   const handleSignOut = async () => {
     try {
       await signOut(getAuth());
-      navigation.navigate('Login'); // Navigate to the Login screen after sign-out
+      navigation.navigate('Home');
     } catch (error) {
       Alert.alert('Error', 'Something went wrong while signing out.');
     }
@@ -122,23 +143,33 @@ const AccountPage = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Navigation Bar */}
       <View style={styles.navBar}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Home')}>
+          <Ionicons name="home" size={25} color={currentRoute === 'Home' ? '#25ced1' : 'black'} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('StoreList')}>
-          <Ionicons name="home" size={25} color="black" />
+          <Ionicons name="storefront-outline" size={25} color={currentRoute === 'StoreList' ? '#25ced1' : 'black'} />
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="cart" size={25} color={currentRoute === 'Cart' ? '#25ced1' : 'black'} />
+          {cartItemCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="cart" size={25} color="black" onPress={() => navigation.navigate('Cart')} />
+          <Ionicons name="person" size={25} color={currentRoute === 'AccountPage' ? '#25ced1' : 'black'} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="person" size={25} color="black" />
-        </TouchableOpacity>
+
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
-          <Ionicons name="settings" size={25} color="black" />
+          <Ionicons name="settings" size={25} color={currentRoute === 'Settings' ? '#25ced1' : 'black'} />
         </TouchableOpacity>
       </View>
 
-      {/* Scrollable Content */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.profileSection}>
           <Pressable onPress={handleImagePick}>
@@ -146,65 +177,64 @@ const AccountPage = () => {
               {userImage ? (
                 <Image source={{ uri: userImage }} style={styles.profileImage} />
               ) : (
-                <Text style={styles.profilePictureText}>+ Add Image</Text>
+                <Text style={[styles.profilePictureText, { fontSize }]}>+ Add Image</Text>
               )}
             </View>
           </Pressable>
-          <Text style={styles.accountName}>{userName.toUpperCase()}</Text>
+          <Text style={[styles.accountName, { fontSize }]}>{userName.toUpperCase()}</Text>
         </View>
 
         <View style={styles.infoSection}>
-          <Text style={styles.infoLabel}>Address:</Text>
+          <Text style={[styles.infoLabel, { fontSize }]}>Address:</Text>
           {userAddress ? (
             <>
-              <Text style={styles.infoText}>
+              <Text style={[styles.infoText, { fontSize }]}>
                 {`${userAddress.streetAddress || ''}, ${userAddress.city || ''}, ${userAddress.state || ''} ${userAddress.zipCode || ''}`}
               </Text>
               <Pressable style={styles.button} onPress={() => navigation.navigate('ChangeAddress')}>
-                <Text style={styles.buttonText}>Edit Address</Text>
+                <Text style={[styles.buttonText, { fontSize }]}>Edit Address</Text>
               </Pressable>
             </>
           ) : (
             <Pressable style={styles.button} onPress={() => navigation.navigate('ChangeAddress')}>
-              <Text style={styles.buttonText}>Add Address</Text>
+              <Text style={[styles.buttonText, { fontSize }]}>Add Address</Text>
             </Pressable>
           )}
         </View>
 
         <View style={styles.infoSection}>
-          <Text style={styles.infoLabel}>Payment Method:</Text>
+          <Text style={[styles.infoLabel, { fontSize }]}>Payment Method:</Text>
           {userPaymentMethod ? (
             <>
-              <Text style={styles.infoText}>Card Number: **** **** **** {userPaymentMethod.cardNumber.slice(-4)}</Text>
-              <Text style={styles.infoText}>Expires: {userPaymentMethod.expirationDate}</Text>
-              <Text style={styles.infoText}>Cardholder: {userPaymentMethod.cardholderName}</Text>
+              <Text style={[styles.infoText, { fontSize }]}>Card Number: **** **** **** {userPaymentMethod.cardNumber.slice(-4)}</Text>
+              <Text style={[styles.infoText, { fontSize }]}>Expires: {userPaymentMethod.expirationDate}</Text>
+              <Text style={[styles.infoText, { fontSize }]}>Cardholder: {userPaymentMethod.cardholderName}</Text>
               <Pressable style={styles.button} onPress={() => navigation.navigate('PaymentMethods')}>
-                <Text style={styles.buttonText}>Edit Payment Method</Text>
+                <Text style={[styles.buttonText, { fontSize }]}>Edit Payment Method</Text>
               </Pressable>
             </>
           ) : (
             <Pressable style={styles.button} onPress={() => navigation.navigate('PaymentMethods')}>
-              <Text style={styles.buttonText}>Add Payment Method</Text>
+              <Text style={[styles.buttonText, { fontSize }]}>Add Payment Method</Text>
             </Pressable>
           )}
         </View>
 
         <View style={styles.infoSection}>
-          <Text style={styles.infoLabel}>Order History:</Text>
+          <Text style={[styles.infoLabel, { fontSize }]}>Order History:</Text>
           {userOrderHistory.length > 0 ? (
             userOrderHistory.map((order, index) => (
-              <Text key={index} style={styles.infoText}>
+              <Text key={index} style={[styles.infoText, { fontSize }]}>
                 {order}
               </Text>
             ))
           ) : (
             <Pressable style={styles.button} onPress={() => navigation.navigate('OrderHistory')}>
-              <Text style={styles.buttonText}>View Order History</Text>
+              <Text style={[styles.buttonText, { fontSize }]}>View Order History</Text>
             </Pressable>
           )}
         </View>
 
-        {/* Sign Out Button */}
         <Pressable style={styles.button} onPress={handleSignOut}>
           <Text style={styles.buttonText}>Sign Out</Text>
         </Pressable>
@@ -220,21 +250,35 @@ const styles = StyleSheet.create({
   },
   navBar: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
     backgroundColor: '#fceade',
-    height: 60,
-    width: '100%',
-    position: 'absolute',
-    top: 0,
-    zIndex: 1,
   },
   scrollContainer: {
     padding: 20,
-    paddingTop: 80, 
+    paddingTop: 80,
   },
   iconButton: {
     padding: 8,
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   profileSection: {
     alignItems: 'center',
@@ -290,6 +334,10 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: 'white',
+    fontSize: 16,
+  },
+  errorText: {
+    color: 'red',
     fontSize: 16,
   },
 });
